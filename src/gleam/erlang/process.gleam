@@ -510,7 +510,7 @@ fn erlang_monitor_process(a: ProcessMonitorFlag, b: Pid) -> Monitor
 
 pub type Monitor
 
-/// A message received when a monitored process exits.
+/// A message received when a monitored process or port exits.
 ///
 pub type Down {
   ProcessDown(monitor: Monitor, pid: Pid, reason: ExitReason)
