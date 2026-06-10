@@ -744,7 +744,15 @@ fn pid_send_after(a: Int, b: Pid, c: #(Dynamic, msg)) -> Timer
 @external(erlang, "erlang", "send_after")
 fn name_send_after(a: Int, b: Name(msg), c: #(Name(msg), msg)) -> Timer
 
-/// Send a message over a channel after a specified number of milliseconds.
+/// Schedule a message to be sent after the specified number of milliseconds.
+///
+/// The process is free to perform other work in the mean time.
+///
+/// To cancel the sending of a scheduled message call the `cancel_timer`
+/// function on the timer value returned by this function.
+///
+/// If you would like to learn more about timers see the
+/// [Erlang runtime documentation](https://www.erlang.org/doc/apps/erts/time_correction.html#timers).
 ///
 pub fn send_after(subject: Subject(msg), delay: Int, message: msg) -> Timer {
   case subject {
