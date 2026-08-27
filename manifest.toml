@@ -7,10 +7,10 @@
 # You should check this file into your source control repository.
 
 packages = [
-  { name = "gleam_stdlib", version = "1.0.5", build_tools = ["gleam"], requirements = [], source = "local", path = "../gleam-stdlib-native" },
+  { name = "gleam_stdlib", version = "1.0.5", build_tools = ["gleam"], requirements = [], source = "local", path = "../gleam-native-stdlib" },
   { name = "gleeunit", version = "1.11.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], source = "local", path = "../gleam-native-gleeunit" },
 ]
 
 [requirements]
-gleam_stdlib = { path = "../gleam-stdlib-native" }
+gleam_stdlib = { path = "../gleam-native-stdlib" }
 gleeunit = { path = "../gleam-native-gleeunit" }
