@@ -34,4 +34,7 @@ pub type StartType {
 /// ```
 ///
 @external(erlang, "gleam_erlang_ffi", "priv_directory")
-pub fn priv_directory(name: String) -> Result(String, Nil)
+pub fn priv_directory(name: String) -> Result(String, Nil) {
+  let _ = name
+  Error(Nil)
+}

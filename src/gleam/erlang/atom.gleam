@@ -24,7 +24,11 @@ pub type Atom
 /// an error is returned.
 ///
 @external(erlang, "gleam_erlang_ffi", "atom_from_string")
-pub fn get(a: String) -> Result(Atom, Nil)
+pub fn get(a: String) -> Result(Atom, Nil) {
+  // On the native target an atom is an interned string, so every string
+  // already has its atom.
+  Ok(coerce(a))
+}
 
 /// Creates an atom from a string, inserting a new value into the virtual
 /// machine's atom table if an atom does not already exist for the given
@@ -36,6 +40,7 @@ pub fn get(a: String) -> Result(Atom, Nil)
 /// virtual machine to crash!
 ///
 @external(erlang, "erlang", "binary_to_atom")
+@external(native, "runtime", "gleam_native_identity")
 pub fn create(a: String) -> Atom
 
 /// Returns a `String` corresponding to the text representation of the given
@@ -49,6 +54,7 @@ pub fn create(a: String) -> Atom
 /// ```
 ///
 @external(erlang, "erlang", "atom_to_binary")
+@external(native, "runtime", "gleam_native_identity")
 pub fn to_string(a: Atom) -> String
 
 /// Convert an atom to a dynamic value, throwing away the type information. 
@@ -56,9 +62,11 @@ pub fn to_string(a: Atom) -> String
 /// This may be useful for testing decoders.
 ///
 @external(erlang, "gleam_erlang_ffi", "identity")
+@external(native, "runtime", "gleam_native_identity")
 pub fn to_dynamic(a: Atom) -> dynamic.Dynamic
 
 @external(erlang, "gleam_erlang_ffi", "identity")
+@external(native, "runtime", "gleam_native_identity")
 pub fn cast_from_dynamic(a: dynamic.Dynamic) -> Atom
 
 /// A dynamic decoder for atoms.
@@ -78,4 +86,14 @@ pub fn decoder() -> decode.Decoder(Atom) {
 }
 
 @external(erlang, "erlang", "is_atom")
-fn is_atom(data: dynamic.Dynamic) -> Bool
+fn is_atom(data: dynamic.Dynamic) -> Bool {
+  // Native atoms are strings, so any string-classified value counts.
+  case decode.run(data, decode.string) {
+    Ok(_) -> True
+    Error(_) -> False
+  }
+}
+
+@external(erlang, "gleam_erlang_ffi", "identity")
+@external(native, "runtime", "gleam_native_identity")
+fn coerce(a: a) -> b

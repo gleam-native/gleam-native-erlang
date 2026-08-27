@@ -3,12 +3,21 @@ import gleam/dynamic/decode
 import gleam/erlang/atom
 import gleam/int
 
+@target(erlang)
 pub fn from_string_test() {
   let assert Ok(_) = atom.get("ok")
   let assert Error(Nil) =
     atom.get("the vm does not have an atom with this content")
 }
 
+@target(native)
+pub fn from_string_test() {
+  // Native atoms are interned strings, so every string has its atom.
+  let assert Ok(_) = atom.get("ok")
+  let assert Ok(_) = atom.get("the vm does not have an atom with this content")
+}
+
+@target(erlang)
 pub fn create_from_string_test() {
   let assert True = atom.get("ok") == Ok(atom.create("ok"))
 
@@ -16,6 +25,14 @@ pub fn create_from_string_test() {
   // creation and doing it at compile time.
   let new = "this is a new atom " <> int.to_string(int.random(100))
   let assert Error(Nil) = atom.get(new)
+  let created = atom.create(new)
+  let assert True = atom.get(new) == Ok(created)
+}
+
+@target(native)
+pub fn create_from_string_test() {
+  let assert True = atom.get("ok") == Ok(atom.create("ok"))
+  let new = "this is a new atom " <> int.to_string(int.random(100))
   let created = atom.create(new)
   let assert True = atom.get(new) == Ok(created)
 }

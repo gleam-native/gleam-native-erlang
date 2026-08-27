@@ -12,4 +12,5 @@ pub type Reference
 /// Create a new unique reference.
 ///
 @external(erlang, "erlang", "make_ref")
+@external(native, "runtime", "gleam_native_process_fresh_tag")
 pub fn new() -> Reference
