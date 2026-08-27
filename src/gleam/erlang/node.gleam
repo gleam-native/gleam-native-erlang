@@ -15,7 +15,9 @@ pub type Node
 /// Return the current node.
 ///
 @external(erlang, "erlang", "node")
-pub fn self() -> Node
+pub fn self() -> Node {
+  panic as "distributed nodes are not supported on the native target"
+}
 
 /// Return a list of all visible nodes in the cluster, not including the current
 /// node.
@@ -28,7 +30,10 @@ pub fn self() -> Node
 /// ```
 ///
 @external(erlang, "erlang", "nodes")
-pub fn visible() -> List(Node)
+pub fn visible() -> List(Node) {
+  // The native target has no distribution, so no other node is visible.
+  []
+}
 
 pub type ConnectError {
   /// Was unable to connect to the node.
@@ -49,7 +54,10 @@ pub type ConnectError {
 /// it is not running in distributed mode.
 ///
 @external(erlang, "gleam_erlang_ffi", "connect_node")
-pub fn connect(node: Atom) -> Result(Node, ConnectError)
+pub fn connect(node: Atom) -> Result(Node, ConnectError) {
+  let _ = node
+  Error(LocalNodeIsNotAlive)
+}
 
 /// Get the atom name of a node.
 ///
@@ -60,4 +68,7 @@ pub fn connect(node: Atom) -> Result(Node, ConnectError)
 /// ```
 ///
 @external(erlang, "gleam_erlang_ffi", "identity")
-pub fn name(node: Node) -> Atom
+pub fn name(node: Node) -> Atom {
+  let _ = node
+  panic as "distributed nodes are not supported on the native target"
+}

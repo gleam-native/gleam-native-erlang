@@ -3,6 +3,7 @@ import gleam/erlang/node
 
 // TODO: Improve these tests by spawning a peer node.
 
+@target(erlang)
 pub fn self_test() {
   let a = node.self()
   let b = node.self()
@@ -18,6 +19,7 @@ pub fn connect_not_alive_test() {
   assert node.connect(name) == Error(node.LocalNodeIsNotAlive)
 }
 
+@target(erlang)
 pub fn name_test() {
   assert node.name(node.self()) == atom.create("nonode@nohost")
 }

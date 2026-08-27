@@ -15,10 +15,12 @@ pub type Charlist
 /// `unicode:characters_to_binary`.
 ///
 @external(erlang, "unicode", "characters_to_binary")
+@external(native, "runtime", "gleam_native_identity")
 pub fn to_string(a: Charlist) -> String
 
 /// Convert a string to a charlist using Erlang's
 /// `unicode:characters_to_list`.
 ///
 @external(erlang, "unicode", "characters_to_list")
+@external(native, "runtime", "gleam_native_identity")
 pub fn from_string(a: String) -> Charlist

@@ -10,6 +10,7 @@ import gleam/option.{Some}
 import gleam/set
 
 @external(erlang, "gleam_erlang_ffi", "identity")
+@external(native, "runtime", "gleam_native_identity")
 fn unsafe_coerce(a: dynamic.Dynamic) -> anything
 
 pub fn self_test() {
@@ -36,10 +37,17 @@ pub fn subject_owner_test() {
 
 pub fn new_name_test() {
   let assert 1000 =
-    list.range(1, 1000)
+    range(1, 1000)
     |> list.map(fn(_) { process.new_name("name") })
     |> set.from_list
     |> set.size
+}
+
+fn range(from: Int, to: Int) -> List(Int) {
+  case from > to {
+    True -> []
+    False -> [from, ..range(from + 1, to)]
+  }
 }
 
 pub fn subject_name_test() {
@@ -83,7 +91,18 @@ pub fn receive_test() {
 }
 
 @external(erlang, "gleam_erlang_test_ffi", "assert_gleam_panic")
-fn assert_panic(f: fn() -> t) -> String
+fn assert_panic(f: fn() -> t) -> String {
+  let pid = process.spawn_unlinked(fn() { f() })
+  let monitor = process.monitor(pid)
+  let assert Ok(down) =
+    process.new_selector()
+    |> process.select_specific_monitor(monitor, fn(down) { down })
+    |> process.selector_receive(500)
+  let assert ProcessDown(reason: process.Abnormal(reason), ..) = down
+  let assert Ok(reason) = decode.run(reason, decode.string)
+  let assert "panic: " <> message = reason
+  message
+}
 
 pub fn receive_other_test() {
   let subject = process.new_subject()
@@ -192,7 +211,7 @@ fn monitor_process_exit(terminating_with: fn() -> Nil) -> process.ExitReason {
   let monitor = process.monitor(pid)
   let selector =
     process.new_selector()
-    |> process.select_monitors(fn(x) { x })
+    |> process.select_specific_monitor(monitor, fn(x) { x })
 
   // There is no monitor message while the child is alive
   let assert Error(Nil) = process.selector_receive(selector, 0)
@@ -221,9 +240,12 @@ pub fn monitor_specific_test() {
       process.receive(subject, 150)
     })
   }
-  // Spawn child
+  // Spawn children, collecting each child's subject in turn so the
+  // ordering is deterministic under parallel scheduling.
   let pid1 = spawn()
+  let assert Ok(child_subject) = process.receive(parent_subject, 50)
   let pid2 = spawn()
+  let assert Ok(_child_subject2) = process.receive(parent_subject, 50)
 
   // Monitor children
   let monitor1 = process.monitor(pid1)
@@ -236,7 +258,6 @@ pub fn monitor_specific_test() {
   let assert Error(Nil) = process.selector_receive(selector, 0)
 
   // Shutdown child to trigger monitor
-  let assert Ok(child_subject) = process.receive(parent_subject, 50)
   process.send(child_subject, Nil)
 
   // We get a process down message!
@@ -323,9 +344,17 @@ pub fn call_forever_test() {
     process.call_forever(call_subject, fn(subject) { #(1, subject) })
 }
 
+@target(erlang)
 @external(erlang, "erlang", "send")
 fn send(a: process.Pid, b: anything) -> Nil
 
+@target(native)
+fn send(a: process.Pid, b: anything) -> Nil {
+  let _ = process.send_raw_tagged(a, 15, b)
+  Nil
+}
+
+@target(erlang)
 pub fn select_record_test() {
   send(process.self(), #("a", 1))
   send(process.self(), #("a", 1, 2))
@@ -610,15 +639,29 @@ pub fn flush_messages_test() {
   let assert Error(Nil) = process.receive(subject, 0)
 }
 
+@target(erlang)
 @external(erlang, "gleam_erlang_ffi", "identity")
 fn atom_to_dynamic(atom: atom.Atom) -> dynamic.Dynamic
 
+@target(erlang)
 pub fn register_name_taken_test() {
   let taken_name = unsafe_coerce(atom_to_dynamic(atom.create("code_server")))
   let assert Ok(a) = process.named(taken_name)
   let assert Error(Nil) = process.register(process.self(), taken_name)
   let assert Ok(b) = process.named(taken_name)
   let assert True = a == b
+}
+
+@target(native)
+pub fn register_name_taken_test() {
+  let taken_name = process.new_name("taken")
+  let holder = process.spawn(fn() { process.sleep_forever() })
+  let assert Ok(Nil) = process.register(holder, taken_name)
+  let assert Ok(a) = process.named(taken_name)
+  let assert Error(Nil) = process.register(process.self(), taken_name)
+  let assert Ok(b) = process.named(taken_name)
+  let assert True = a == b
+  process.kill(holder)
 }
 
 pub fn register_name_test() {
